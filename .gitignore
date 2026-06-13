@@ -1,0 +1,15 @@
+﻿**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+**/ios/
+**/android/
+**/__pycache__/
+**/venv/
+**/.venv/
+**/*.db
+**/.env
+*.keystore
+*.jks
+.DS_Store
+*.tsbuildinfo

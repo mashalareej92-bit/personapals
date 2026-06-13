@@ -1,0 +1,1 @@
+export const API_URL = 'https://mashalareej92-personapals-backend.hf.space';
