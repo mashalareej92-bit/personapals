@@ -114,14 +114,24 @@ function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     let alive = true;
-    fetch(`${API_URL}/profile/${CHILD_ID}`)
-      .then(r => r.json())
-      .then(d => { if (alive) { setProfile(d); setLoading(false); } })
-      .catch(() => { if (alive) { setFailed(true); setLoading(false); } });
-    return () => { alive = false; };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    fetch(`${API_URL}/profile/${CHILD_ID}`, { signal: controller.signal })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => { if (alive) { setProfile(d); setLoading(false); setFailed(false); } })
+      .catch(() => { if (alive) { setFailed(true); setLoading(false); } })
+      .finally(() => clearTimeout(timeout));
+
+    return () => { alive = false; controller.abort(); clearTimeout(timeout); };
   }, []);
+
   return { profile, loading, failed };
 }
 

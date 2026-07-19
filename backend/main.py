@@ -76,6 +76,7 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
         memory = models.build_memory_summary(db, req.child_id, req.quest_id)
         messages = build_chat_messages(req, memory_facts=memory)
         reply = (await generate_chat_reply(messages)).strip()
+        log.info("Groq raw reply: %r", reply)
 
         if not is_chat_response_safe(reply):
             log.warning("Chat safety rejected reply for child %s", req.child_id)
@@ -87,8 +88,9 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
 
     except Exception as exc:
         log.warning("Chat failed  child=%s  error=%s", req.child_id, exc)
+        import traceback
+        log.warning(traceback.format_exc())
         return ChatResponse(reply=_chat_fallback(req), source="fallback")
-
 
 def _chat_fallback(req: ChatRequest) -> str:
     return {

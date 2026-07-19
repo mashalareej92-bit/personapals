@@ -300,8 +300,11 @@ function CompletionScreen({ quest, taskId, stepFeedback, mood, onBack }: { quest
   const bO = useRef(new Animated.Value(0)).current;
   const rock = useRef(new Animated.Value(0)).current;
 
-  // ── Wire /complete-quest to backend ──
-  // ── Wire /complete-quest to backend ──
+  const [note, setNote] = useState(
+    "You showed real effort today. Every quest makes you a little bit stronger. Milo can't wait for your next adventure!"
+  );
+  const [noteFailed, setNoteFailed] = useState(false);
+
   // ── Wire /complete-quest to backend (feeds Milo's memory) ──
   useEffect(() => {
     fetch(`${API_URL}/complete-quest`, {
@@ -318,12 +321,15 @@ function CompletionScreen({ quest, taskId, stepFeedback, mood, onBack }: { quest
     })
       .then(r => r.json())
       .then(data => {
-        // push fresh server values into the store so Missions shows them instantly
-        if (data && typeof data.xp_total === 'number') {
-          store.setStats({ xp: data.xp_total, level: data.level, streak: data.streak });
+        if (data.source === 'fallback') {
+          console.warn('CHAT FALLBACK TRIGGERED — not a real AI reply');
         }
+        setNote(data.milo_note ?? note);
       })
-      .catch(() => {});
+      .catch(err => {
+        console.error('complete-quest request failed', err);
+        setNoteFailed(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -365,10 +371,10 @@ function CompletionScreen({ quest, taskId, stepFeedback, mood, onBack }: { quest
                 <Image source={MILO.base} style={{ width: 22, height: 22, resizeMode: 'contain' }} />
                 <Text style={{ fontFamily: 'Nunito_900Black', fontSize: 10, letterSpacing: 1.5, color: C.gold }}>MILO'S NOTE</Text>
                 <View style={{ marginLeft: 'auto', backgroundColor: C.goldWash, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(244,201,100,0.4)' }}>
-                  <Text style={{ fontFamily: 'Nunito_900Black', fontSize: 9, letterSpacing: 1, color: C.gold }}>AI</Text>
+                  <Text style={{ fontFamily: 'Nunito_900Black', fontSize: 9, letterSpacing: 1, color: C.gold }}>{noteFailed ? 'OFFLINE' : 'AI'}</Text>
                 </View>
               </View>
-              <Text style={{ fontFamily: 'Nunito_700Bold', fontSize: 13, color: C.inkSoft, lineHeight: 20 }}>You showed real effort today. Every quest makes you a little bit stronger. Milo can't wait for your next adventure!</Text>
+              <Text style={{ fontFamily: 'Nunito_700Bold', fontSize: 13, color: C.inkSoft, lineHeight: 20 }}>{note}</Text>
             </View>
           </Animated.View>
           <Animated.View style={{ opacity: bO, width: '100%' }}>
